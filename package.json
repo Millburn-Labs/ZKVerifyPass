@@ -1,4 +1,34 @@
 {
   "name": "ZKVerifyPass",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "description": "A platform for private data verification using zk-SNARKs for identity/compliance without revealing info",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy": "hardhat ignition deploy ./ignition/modules/ZKVerifyPass.ts",
+    "generate-circuit": "circom circuits/verify.circom --r1cs --wasm --sym",
+    "setup-circuit": "snarkjs powersoftau new bn128 12 pot12_0000.ptau -v && snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name=\"First contribution\" -v && snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v && snarkjs groth16 setup verify.r1cs pot12_final.ptau verify_0000.zkey && snarkjs zkey contribute verify_0000.zkey verify_0001.zkey --name=\"1st Contributor Name\" -v && snarkjs zkey export verificationkey verify_0001.zkey verification_key.json"
+  },
+  "keywords": [
+    "zk-SNARKs",
+    "zero-knowledge",
+    "verification",
+    "privacy",
+    "identity",
+    "compliance"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/node": "^20.0.0",
+    "hardhat": "^2.19.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "snarkjs": "^0.7.3",
+    "circomlib": "^2.0.5"
+  }
 }
