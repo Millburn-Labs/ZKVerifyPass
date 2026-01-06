@@ -15,3 +15,27 @@ node_modules
 
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
+
+# Circuit files (generated)
+circuits/*.r1cs
+circuits/*.wasm
+circuits/*.sym
+circuits/*.zkey
+circuits/*.ptau
+circuits/verification_key.json
+circuits/pot*
+
+# Proof files
+proofs/
+*.proof.json
+*.public.json
+
+# Generated verifier (replace with your generated one)
+# contracts/Verifier.sol
+verification_key.json
+verify_0000.zkey
+verify_0001.zkey
+verify.r1cs
+verify.wasm
+verify.sym
+pot*

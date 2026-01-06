@@ -23,7 +23,9 @@ contract ZKVerifyPass {
     uint256 public verificationFee;
     
     // Circuit configuration
-    uint256 public constant PUBLIC_INPUTS_COUNT = 2; // Adjust based on your circuit
+    // Update this to match your circuit's public inputs count
+    // Current circuit (verify.circom) has 1 public input: publicHash
+    uint256 public constant PUBLIC_INPUTS_COUNT = 1;
     
     // Events
     event VerificationRequested(
