@@ -9,9 +9,9 @@ This directory contains the zk-SNARK circuits for ZKVerifyPass.
 npm install -g circom
 ```
 
-2. Install circomlib:
+2. Install circomlib and circomlibjs:
 ```bash
-npm install circomlib
+npm install circomlib circomlibjs
 ```
 
 ## Circuit Compilation
@@ -69,27 +69,55 @@ snarkjs zkey export solidityverifier verify_0001.zkey contracts/Verifier.sol
 
 **Important:** Replace the template `Verifier.sol` with the generated one.
 
-## Generate Proof (JavaScript Example)
+## Generate Proof
+
+### Option 1: Use the Provided Script (Recommended)
+
+The easiest way to generate a proof is to use the provided script:
+
+```bash
+node scripts/generateProof.js
+```
+
+This script will:
+1. Calculate the Poseidon hash of your secret and salt
+2. Generate the zk-SNARK proof
+3. Save the proof and public signals to the `proofs/` directory
+
+**Note:** Make sure you have installed `circomlibjs`:
+```bash
+npm install circomlibjs --legacy-peer-deps
+```
+
+### Option 2: Manual Proof Generation
+
+If you want to generate proofs manually or customize the inputs, you can use the following JavaScript code:
 
 ```javascript
 const snarkjs = require("snarkjs");
 const fs = require("fs");
+const { buildPoseidon } = require("circomlibjs");
 
 async function generateProof() {
-    // Load the circuit
-    const wasm = "verify.wasm";
+    // Load the circuit files
+    const wasm = "circuits/verify_js/verify.wasm";
     const zkey = "verify_0001.zkey";
+    
+    // Your private inputs
+    const secret = 12345;  // Your secret value
+    const salt = 67890;    // Random salt
+    
+    // Calculate the Poseidon hash (this becomes the public input)
+    const poseidon = await buildPoseidon();
+    const publicHash = poseidon.F.toString(
+        poseidon([BigInt(secret), BigInt(salt)])
+    );
     
     // Prepare inputs
     const input = {
-        secret: 12345,
-        salt: 67890,
-        publicHash: [
-            // Calculate these from your hash function
-            // This is just an example
-            123456789,
-            987654321
-        ]
+        secret: secret,
+        salt: salt,
+        publicHash: publicHash  // Must match the hash computed by the circuit
     };
     
     // Generate proof
@@ -101,7 +129,7 @@ async function generateProof() {
     
     // Save proof
     fs.writeFileSync("proof.json", JSON.stringify(proof, null, 2));
-    fs.writeFileSync("public.json", JSON.stringify(publicSignals, null, 2));
+    fs.writeFileSync("publicSignals.json", JSON.stringify(publicSignals, null, 2));
     
     console.log("Proof generated!");
     console.log("Public signals:", publicSignals);
@@ -112,8 +140,16 @@ generateProof();
 
 ## Verify Proof Off-Chain
 
+After generating the proof, you can verify it off-chain:
+
 ```bash
-snarkjs groth16 verify verification_key.json public.json proof.json
+snarkjs groth16 verify verification_key.json proofs/publicSignals.json proofs/proof.json
+```
+
+Or use the provided script:
+
+```bash
+node scripts/verifyProof.js
 ```
 
 ## Circuit Customization
