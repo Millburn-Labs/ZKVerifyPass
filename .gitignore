@@ -41,4 +41,5 @@ verify.sym
 verify_js/
 verify_custom.r1cs
 verify_custom.sym
+verify_custom_js/
 pot*
