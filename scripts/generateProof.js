@@ -14,13 +14,14 @@
 const snarkjs = require("snarkjs");
 const fs = require("fs");
 const path = require("path");
+const { buildPoseidon } = require("circomlibjs");
 
 async function generateProof() {
     console.log("Generating zk-SNARK proof...\n");
 
     // Paths to circuit files
-    const wasmPath = path.join(__dirname, "../circuits/verify.wasm");
-    const zkeyPath = path.join(__dirname, "../circuits/verify_0001.zkey");
+    const wasmPath = path.join(__dirname, "../circuits/verify_js/verify.wasm");
+    const zkeyPath = path.join(__dirname, "../verify_0001.zkey");
 
     // Check if files exist
     if (!fs.existsSync(wasmPath)) {
@@ -37,16 +38,21 @@ async function generateProof() {
 
     // Example inputs
     // In a real application, these would come from user data
+    const secret = 12345;      // Private: The secret value
+    const salt = 67890;       // Private: Random salt
+    
+    // Calculate the Poseidon hash of (secret, salt) to get the publicHash
+    // This must match what the circuit computes
+    console.log("Calculating Poseidon hash...");
+    const poseidon = await buildPoseidon();
+    const publicHash = poseidon.F.toString(
+        poseidon([BigInt(secret), BigInt(salt)])
+    );
+    
     const input = {
-        secret: 12345,      // Private: The secret value
-        salt: 67890,       // Private: Random salt
-        publicHash: [      // Public: Hash commitment (must match circuit output)
-            // These values should be calculated from your hash function
-            // For demonstration, using placeholder values
-            // In production, calculate these from: hash(secret, salt)
-            123456789,
-            987654321
-        ]
+        secret: secret,
+        salt: salt,
+        publicHash: publicHash  // Public: Hash commitment (calculated from secret + salt)
     };
 
     console.log("Input:", JSON.stringify(input, null, 2));
@@ -61,10 +67,16 @@ async function generateProof() {
         );
 
         // Format proof for Solidity
-        const calldata = await snarkjs.groth16.exportSolidityCallData(
-            proof,
-            publicSignals
-        );
+        let calldata;
+        try {
+            calldata = await snarkjs.groth16.exportSolidityCallData(
+                proof,
+                publicSignals
+            );
+        } catch (error) {
+            console.warn("Warning: Could not export Solidity calldata:", error.message);
+            calldata = null;
+        }
 
         // Save proof and public signals
         const outputDir = path.join(__dirname, "../proofs");
@@ -82,16 +94,28 @@ async function generateProof() {
             JSON.stringify(publicSignals, null, 2)
         );
 
-        fs.writeFileSync(
-            path.join(outputDir, "calldata.json"),
-            JSON.stringify(JSON.parse(calldata), null, 2)
-        );
+        if (calldata) {
+            try {
+                // Calldata is a JSON string, parse and save it
+                const calldataObj = JSON.parse(calldata);
+                fs.writeFileSync(
+                    path.join(outputDir, "calldata.json"),
+                    JSON.stringify(calldataObj, null, 2)
+                );
+            } catch (parseError) {
+                // If parsing fails, save as raw string
+                fs.writeFileSync(
+                    path.join(outputDir, "calldata.txt"),
+                    calldata
+                );
+            }
+        }
 
         console.log("✓ Proof generated successfully!");
         console.log("\nPublic signals:", publicSignals);
         console.log("\nProof saved to:", outputDir);
         console.log("\nTo verify off-chain:");
-        console.log("  snarkjs groth16 verify circuits/verification_key.json proofs/publicSignals.json proofs/proof.json");
+        console.log("  snarkjs groth16 verify verification_key.json proofs/publicSignals.json proofs/proof.json");
 
         return { proof, publicSignals, calldata };
     } catch (error) {
