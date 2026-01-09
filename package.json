@@ -26,6 +26,7 @@
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@types/node": "^20.0.0",
     "hardhat": "^2.19.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
   "dependencies": {
