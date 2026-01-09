@@ -154,17 +154,92 @@ node scripts/verifyProof.js
 
 ## Circuit Customization
 
-To create your own circuit:
+### Using the Custom Verification Circuit
+
+A custom multi-purpose verification circuit (`verify_custom.circom`) has been created that demonstrates multiple verification use cases:
+
+1. **Age Verification** (Type 1): Prove you know an age value that hashes to a commitment
+   - Private inputs: `age`, `ageSalt`
+   - Public input: `ageCommitment` (hash commitment)
+
+2. **Identity Verification** (Type 2): Prove you have valid identity credentials
+   - Private inputs: `identitySecret`, `identitySalt`
+   - Public input: `identityCommitment` (hash commitment)
+
+3. **Compliance Verification** (Type 3): Prove you meet compliance requirements
+   - Private inputs: `complianceData`, `complianceSalt`
+   - Public input: `complianceCommitment` (hash commitment)
+
+4. **Asset Ownership Verification** (Type 4): Prove ownership without revealing the asset
+   - Private inputs: `assetId`, `ownerSecret`
+   - Public input: `ownershipCommitment` (hash commitment)
+
+#### Setup for Custom Circuit
+
+1. Compile the custom circuit:
+```bash
+circom circuits/verify_custom.circom --r1cs --wasm --sym
+```
+
+2. Run trusted setup (same process as regular circuit):
+```bash
+snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
+snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v
+snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
+
+snarkjs groth16 setup verify_custom.r1cs pot12_final.ptau verify_custom_0000.zkey
+snarkjs zkey contribute verify_custom_0000.zkey verify_custom_0001.zkey --name="1st Contributor" -v
+
+snarkjs zkey export verificationkey verify_custom_0001.zkey verify_custom_verification_key.json
+snarkjs zkey export solidityverifier verify_custom_0001.zkey contracts/Verifier_custom.sol
+```
+
+3. Generate proof for a specific verification type:
+```bash
+# Age verification (type 1)
+node scripts/generateProof_custom.js 1
+
+# Identity verification (type 2)
+node scripts/generateProof_custom.js 2
+
+# Compliance verification (type 3)
+node scripts/generateProof_custom.js 3
+
+# Asset ownership verification (type 4)
+node scripts/generateProof_custom.js 4
+```
+
+### Creating Your Own Circuit
+
+To create your own custom circuit:
 
 1. Define private inputs (data to keep secret)
 2. Define public inputs (data that will be revealed)
-3. Implement your verification logic
+3. Implement your verification logic using Circom templates
 4. Ensure the circuit outputs constraints that must be satisfied
 
-Example use cases:
-- Age verification (prove age >= 18 without revealing exact age)
-- Identity verification (prove you have valid credentials)
-- Compliance checks (prove you meet requirements)
-- Asset ownership (prove you own an asset without revealing which one)
+#### Common Circom Templates
+
+- `Poseidon(n)`: Hash function for zk-friendly hashing (n = number of inputs)
+- `IsEqual()`: Check if two values are equal
+- `LessThan(n)`: Check if first value < second value (n = bit size)
+- `GreaterThan(n)`: Check if first value > second value (n = bit size)
+
+#### Example Use Cases
+
+- **Age verification**: Prove age >= threshold without revealing exact age
+- **Identity verification**: Prove you have valid credentials
+- **Compliance checks**: Prove you meet requirements
+- **Asset ownership**: Prove you own an asset without revealing which one
+- **Credit scores**: Prove creditworthiness without revealing score
+- **Membership proofs**: Prove membership in a set without revealing which member
+
+#### Tips for Circuit Design
+
+1. **Keep it simple**: Start with basic constraints and add complexity gradually
+2. **Test thoroughly**: Always test with known inputs before generating proofs
+3. **Use hash commitments**: For privacy, hash private values with salts to create commitments
+4. **Optimize constraints**: Fewer constraints mean faster proof generation and lower gas costs
+5. **Document your circuit**: Comment your code explaining what each constraint does
 
 

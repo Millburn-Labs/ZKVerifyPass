@@ -38,4 +38,8 @@ verify_0001.zkey
 verify.r1cs
 verify.wasm
 verify.sym
+verify_js/
+verify_custom.r1cs
+verify_custom.sym
+verify_custom_js/
 pot*
