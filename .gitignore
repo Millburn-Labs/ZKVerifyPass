@@ -43,3 +43,6 @@ verify_custom.r1cs
 verify_custom.sym
 verify_custom_js/
 pot*
+
+
+FRONTEND_INTEGRATION.md
