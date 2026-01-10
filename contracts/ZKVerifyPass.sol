@@ -9,8 +9,12 @@ import "./VerificationRegistry.sol";
  * @notice Main contract for zk-SNARK proof verification and management
  * @dev This contract orchestrates the verification process:
  *      1. Receives zk-SNARK proofs from users
- *      2. Verifies proofs using the Verifier contract
+ *      2. Verifies proofs using the Verifier contract (configured for verify_custom.circom)
  *      3. Records results in the VerificationRegistry
+ * 
+ * Note: Configured for verify_custom.circom. The custom circuit currently has 0 public outputs.
+ * Groth16 requires at least 1 public input, so the circuit must be modified to expose 
+ * verificationType as a public input before deployment.
  */
 contract ZKVerifyPass {
     Verifier public verifier;
@@ -23,9 +27,11 @@ contract ZKVerifyPass {
     uint256 public verificationFee;
     
     // Circuit configuration
-    // Update this to match your circuit's public inputs count
-    // Current circuit (verify.circom) has 1 public input: publicHash
-    uint256 public constant PUBLIC_INPUTS_COUNT = 1;
+    // Configured for verify_custom.circom (has 0 public outputs - all inputs are private)
+    // IMPORTANT: Groth16 requires at least 1 public input. The circuit must be modified
+    // to expose verificationType as a public input before use. Once modified, update
+    // this constant to 1 to match the modified circuit.
+    uint256 public constant PUBLIC_INPUTS_COUNT = 0;
     
     // Events
     event VerificationRequested(
