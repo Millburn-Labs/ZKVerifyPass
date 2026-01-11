@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useAccount, useDisconnect } from 'wagmi';
+import { AppKitButton } from '@reown/appkit/react';
 
 type VerificationType = 'age' | 'identity' | 'compliance' | 'ownership' | null;
 
 export default function Home() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const [selectedVerificationType, setSelectedVerificationType] = useState<VerificationType>(null);
   const [proofData, setProofData] = useState('');
   const [hasProofData, setHasProofData] = useState(false);
@@ -17,9 +20,8 @@ export default function Home() {
     { id: 'ownership', label: 'Asset Ownership', description: 'Prove ownership with hash commitment' },
   ];
 
-  const handleConnectWallet = () => {
-    // Placeholder for wallet connection logic
-    setIsWalletConnected(!isWalletConnected);
+  const handleDisconnect = () => {
+    disconnect();
   };
 
   const handleVerificationTypeSelect = (type: VerificationType) => {
@@ -36,7 +38,7 @@ export default function Home() {
 
     try {
       const parsed = JSON.parse(proofData);
-      console.log('Submitting proof:', { type: selectedVerificationType, proof: parsed });
+      console.log('Submitting proof:', { type: selectedVerificationType, proof: parsed, address });
       // Placeholder for proof submission logic
       alert('Proof submitted! (This is a placeholder)');
     } catch (error) {
@@ -55,12 +57,23 @@ export default function Home() {
             </div>
             <span className="text-2xl font-bold">ZKVerifyPass</span>
           </div>
-          <button
-            onClick={handleConnectWallet}
-            className="px-6 py-2 border border-white rounded-lg hover:bg-white hover:text-black transition-colors"
-          >
-            {isWalletConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
-          </button>
+          <div className="flex items-center gap-3">
+            {isConnected && address && (
+              <span className="text-sm text-gray-400">
+                {address.slice(0, 6)}...{address.slice(-4)}
+              </span>
+            )}
+            {isConnected ? (
+              <button
+                onClick={handleDisconnect}
+                className="px-6 py-2 border border-white rounded-lg hover:bg-white hover:text-black transition-colors"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <AppKitButton />
+            )}
+          </div>
         </div>
       </header>
 
