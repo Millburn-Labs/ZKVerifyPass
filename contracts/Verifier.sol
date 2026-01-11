@@ -20,7 +20,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-contract Groth16Verifier {
+contract Verifier {
     // Scalar field size
     uint256 constant r    = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     // Base field size
@@ -53,7 +53,32 @@ contract Groth16Verifier {
 
     uint16 constant pLastMem = 896;
 
+    // Proof structure for easier integration
+    struct Proof {
+        uint[2] a;
+        uint[2][2] b;
+        uint[2] c;
+    }
+
+    // Public function with original signature (for backward compatibility)
     function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[1] calldata _pubSignals) public view returns (bool) {
+        uint[2] memory pA = _pA;
+        uint[2][2] memory pB = _pB;
+        uint[2] memory pC = _pC;
+        uint[1] memory pubSignals = _pubSignals;
+        return _verifyProofInternal(pA, pB, pC, pubSignals);
+    }
+
+    // Wrapper function that accepts Proof struct and uint[] for public inputs
+    function verifyProof(Proof memory proof, uint[] memory publicInputs) public view returns (bool) {
+        require(publicInputs.length == 1, "Invalid public inputs length");
+        uint[1] memory pubSignals;
+        pubSignals[0] = publicInputs[0];
+        return _verifyProofInternal(proof.a, proof.b, proof.c, pubSignals);
+    }
+
+    // Internal function with original signature
+    function _verifyProofInternal(uint[2] memory _pA, uint[2][2] memory _pB, uint[2] memory _pC, uint[1] memory _pubSignals) internal view returns (bool) {
         assembly {
             function checkField(v) {
                 if iszero(lt(v, r)) {
@@ -99,14 +124,14 @@ contract Groth16Verifier {
                 
 
                 // -A
-                mstore(_pPairing, calldataload(pA))
-                mstore(add(_pPairing, 32), mod(sub(q, calldataload(add(pA, 32))), q))
+                mstore(_pPairing, mload(pA))
+                mstore(add(_pPairing, 32), mod(sub(q, mload(add(pA, 32))), q))
 
                 // B
-                mstore(add(_pPairing, 64), calldataload(pB))
-                mstore(add(_pPairing, 96), calldataload(add(pB, 32)))
-                mstore(add(_pPairing, 128), calldataload(add(pB, 64)))
-                mstore(add(_pPairing, 160), calldataload(add(pB, 96)))
+                mstore(add(_pPairing, 64), mload(pB))
+                mstore(add(_pPairing, 96), mload(add(pB, 32)))
+                mstore(add(_pPairing, 128), mload(add(pB, 64)))
+                mstore(add(_pPairing, 160), mload(add(pB, 96)))
 
                 // alpha1
                 mstore(add(_pPairing, 192), alphax)
@@ -130,8 +155,8 @@ contract Groth16Verifier {
                 mstore(add(_pPairing, 544), gammay2)
 
                 // C
-                mstore(add(_pPairing, 576), calldataload(pC))
-                mstore(add(_pPairing, 608), calldataload(add(pC, 32)))
+                mstore(add(_pPairing, 576), mload(pC))
+                mstore(add(_pPairing, 608), mload(add(pC, 32)))
 
                 // delta2
                 mstore(add(_pPairing, 640), deltax1)
