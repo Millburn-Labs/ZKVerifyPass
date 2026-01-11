@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000000";
+const PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY ;
 
 const config: HardhatUserConfig = {
   solidity: {
