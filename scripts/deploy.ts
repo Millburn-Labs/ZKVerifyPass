@@ -5,24 +5,6 @@
  * 1. VerificationRegistry - Storage contract for verification records
  * 2. Verifier - zk-SNARK proof verifier (Groth16Verifier from Verifier.sol)
  * 3. ZKVerifyPass - Main contract that orchestrates verification
- * 
- * Usage:
- *   Local deployment:        npm run deploy:localhost
- *   Sepolia testnet:         npm run deploy:sepolia
- *   Goerli testnet:          npm run deploy:goerli
- *   Mainnet:                 npm run deploy:mainnet
- *   Default (Hardhat):       npm run deploy
- * 
- * Environment Variables (optional):
- *   PRIVATE_KEY - Private key of the deployer account
- *   SEPOLIA_RPC_URL - RPC URL for Sepolia network
- *   GOERLI_RPC_URL - RPC URL for Goerli network
- *   MAINNET_RPC_URL - RPC URL for Ethereum mainnet
- *   VERIFICATION_FEE_WEI - Initial verification fee in wei (default: 1000000000000000 = 0.001 ETH)
- * 
- * The script will save deployment information to:
- *   - deployments/<network-name>.json
- *   - deployments/latest.json
  */
 
 import { ethers } from "hardhat";
