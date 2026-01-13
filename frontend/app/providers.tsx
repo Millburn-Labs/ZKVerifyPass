@@ -5,6 +5,7 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { defineChain } from 'viem';
+import type { Chain } from 'viem';
 
 // Mantle Sepolia testnet configuration
 const mantleSepolia = defineChain({
@@ -41,8 +42,8 @@ const metadata = {
   icons: [],
 };
 
-// Define networks
-const networks = [mantleSepolia];
+// Define networks - must have at least one network (tuple type required by createAppKit)
+const networks = [mantleSepolia] as [Chain, ...Chain[]];
 
 // Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
