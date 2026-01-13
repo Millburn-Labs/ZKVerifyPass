@@ -18,8 +18,8 @@ describe("ZKVerifyPass", function () {
     ownerAddress = await owner.getAddress();
     userAddress = await user.getAddress();
 
-    // Deploy Verifier (template - in production, use generated verifier)
-    const Verifier = await ethers.getContractFactory("Verifier");
+    // Deploy Verifier_custom (Groth16Verifier for custom circuit)
+    const Verifier = await ethers.getContractFactory("Groth16Verifier");
     verifier = await Verifier.deploy();
 
     // Deploy VerificationRegistry
@@ -82,7 +82,7 @@ describe("ZKVerifyPass", function () {
         ],
         c: [ethers.parseUnits("7", 0), ethers.parseUnits("8", 0)]
       };
-      const publicInputs = [ethers.parseUnits("9", 0), ethers.parseUnits("10", 0)];
+      const publicInputs: bigint[] = []; // Custom circuit has 0 public inputs
 
       await expect(
         zkVerifyPass.connect(user).verifyAndRecord(
@@ -104,7 +104,7 @@ describe("ZKVerifyPass", function () {
         ],
         c: [ethers.parseUnits("7", 0), ethers.parseUnits("8", 0)]
       };
-      const publicInputs = [ethers.parseUnits("9", 0)]; // Wrong length
+      const publicInputs = [ethers.parseUnits("9", 0)]; // Wrong length (should be empty for custom circuit)
 
       await expect(
         zkVerifyPass.connect(user).verifyAndRecord(
@@ -126,7 +126,7 @@ describe("ZKVerifyPass", function () {
         ],
         c: [ethers.parseUnits("7", 0), ethers.parseUnits("8", 0)]
       };
-      const publicInputs = [ethers.parseUnits("9", 0), ethers.parseUnits("10", 0)];
+      const publicInputs: bigint[] = []; // Custom circuit has 0 public inputs
       const excessAmount = ethers.parseEther("0.001");
       const totalAmount = verificationFee + excessAmount;
 
