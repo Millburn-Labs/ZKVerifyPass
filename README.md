@@ -66,11 +66,11 @@ npm install -g circom
 ```
 ZKVerifyPass/
 ├── contracts/
-│   ├── Verifier.sol              # Auto-generated verifier (replace with generated one)
+│   ├── Verifier_custom.sol       # Auto-generated verifier for custom circuit (Groth16Verifier)
 │   ├── ZKVerifyPass.sol          # Main verification contract
 │   └── VerificationRegistry.sol  # Storage for verification records
 ├── circuits/
-│   ├── verify.circom             # Sample zk-SNARK circuit
+│   ├── verify_custom.circom      # Custom zk-SNARK circuit (age, identity, compliance, ownership)
 │   └── README.md                 # Circuit setup instructions
 ├── scripts/
 │   ├── generateProof.js          # Generate zk-SNARK proofs
@@ -88,31 +88,31 @@ ZKVerifyPass/
 npm run compile
 ```
 
-### 2. Setup Circuit (First Time Only)
+### 2. Setup Custom Circuit (First Time Only)
 
-Follow the detailed instructions in `circuits/README.md`:
+Follow the detailed instructions in `circuits/CUSTOM_CIRCUIT_GUIDE.md`:
 
 ```bash
-# Compile circuit
-circom circuits/verify.circom --r1cs --wasm --sym
+# Compile custom circuit
+circom circuits/verify_custom.circom --r1cs --wasm --sym
 
 # Run trusted setup
 snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
 snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v
 snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
 
-# Generate proving key
-snarkjs groth16 setup verify.r1cs pot12_final.ptau verify_0000.zkey
-snarkjs zkey contribute verify_0000.zkey verify_0001.zkey --name="1st Contributor" -v
+# Generate proving key for custom circuit
+snarkjs groth16 setup verify_custom.r1cs pot12_final.ptau verify_custom_0000.zkey
+snarkjs zkey contribute verify_custom_0000.zkey verify_custom_0001.zkey --name="1st Contributor" -v
 
 # Export verification key
-snarkjs zkey export verificationkey verify_0001.zkey verification_key.json
+snarkjs zkey export verificationkey verify_custom_0001.zkey verify_custom_verification_key.json
 
-# Generate Solidity verifier
-snarkjs zkey export solidityverifier verify_0001.zkey contracts/Verifier.sol
+# Generate Solidity verifier for custom circuit
+snarkjs zkey export solidityverifier verify_custom_0001.zkey contracts/Verifier_custom.sol
 ```
 
-**Important:** Replace the template `Verifier.sol` with the generated one.
+**Important:** The generated `Verifier_custom.sol` contains the `Groth16Verifier` contract for the custom circuit.
 
 ### 3. Generate Proof
 
@@ -248,7 +248,7 @@ npm test
 
 1. **Trusted Setup**: The circuit's trusted setup ceremony is critical. Use a secure multi-party ceremony for production.
 
-2. **Verifier Contract**: Always use the auto-generated verifier from SnarkJS. Never modify it manually.
+2. **Verifier_custom Contract**: Always use the auto-generated Verifier_custom.sol (Groth16Verifier) from SnarkJS. Never modify it manually.
 
 3. **Circuit Design**: Carefully design your circuit to ensure it correctly verifies the intended properties.
 

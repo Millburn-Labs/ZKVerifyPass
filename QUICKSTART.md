@@ -47,13 +47,13 @@ snarkjs zkey contribute verify_0000.zkey verify_0001.zkey --name="1st Contributo
 # Export verification key
 snarkjs zkey export verificationkey verify_0001.zkey verification_key.json
 
-# Generate Solidity verifier
-snarkjs zkey export solidityverifier verify_0001.zkey ../contracts/Verifier.sol
+# Generate Solidity verifier for custom circuit
+snarkjs zkey export solidityverifier verify_custom_0001.zkey ../contracts/Verifier_custom.sol
 
 cd ..
 ```
 
-**Important:** The generated `Verifier.sol` will replace the template. Make sure to review it.
+**Important:** The generated `Verifier_custom.sol` contains the `Groth16Verifier` contract for the custom circuit. Make sure to review it.
 
 ## Step 4: Generate a Proof
 
@@ -115,7 +115,7 @@ npm test
 - Export the verification key: `snarkjs zkey export verificationkey verify_0001.zkey verification_key.json`
 
 ### Contract compilation errors
-- Make sure you've generated the Verifier contract from your circuit
+- Make sure you've generated the Verifier_custom contract from your custom circuit
 - Check that Solidity version matches in `hardhat.config.ts`
 
 ## Production Checklist

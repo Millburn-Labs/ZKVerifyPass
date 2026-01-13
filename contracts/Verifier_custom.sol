@@ -20,31 +20,31 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-contract Verifier {
+contract Groth16Verifier {
     // Scalar field size
     uint256 constant r    = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     // Base field size
     uint256 constant q   = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     // Verification Key data
-    uint256 constant alphax  = 21051027028534292589651719977609922229122611070584335784760578650992960161422;
-    uint256 constant alphay  = 14019391315860868463717565441375005611108332702794970644824746893678636637837;
-    uint256 constant betax1  = 6781857791187697997607613965613457566792056251683472347360548662906580869859;
-    uint256 constant betax2  = 3695257199749194482602926844019744878247685115915719654423782207677831699034;
-    uint256 constant betay1  = 5933370569677708285131965020646663996755946819192078429097529833673011556659;
-    uint256 constant betay2  = 4828489683440084463805518467360094849895987999531459915079678923283499950878;
+    uint256 constant alphax  = 2691957822151956153565083949747720831981571621741219443758642819242598715278;
+    uint256 constant alphay  = 21633398851234226413666252032804985143607037412170011664023684917144646935052;
+    uint256 constant betax1  = 799288537784943409244549539558029090815499307924659458156647900117553337156;
+    uint256 constant betax2  = 4321025771869461736332466732702675767527018896969331728665884139210887098075;
+    uint256 constant betay1  = 3355974198680658944738472046775722453111542630681789496824926955764569688945;
+    uint256 constant betay2  = 450146703498107203031472836255898308108428907011865211913604747427304754912;
     uint256 constant gammax1 = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
     uint256 constant gammax2 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
     uint256 constant gammay1 = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
     uint256 constant gammay2 = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
-    uint256 constant deltax1 = 9152384277615508300254645750271864830152260508047061899878614235797753915895;
-    uint256 constant deltax2 = 9192177589574599357778084085976226994766555129554064669597570286641584767679;
-    uint256 constant deltay1 = 21574006896335494550569937532750432637315275180809828408008411602155187875122;
-    uint256 constant deltay2 = 15187808001609261696764188783145092334185018056546630200093723487870239100124;
+    uint256 constant deltax1 = 15194963465284581862647625784194431577064453281930752549862689905398999599053;
+    uint256 constant deltax2 = 7319905602636386227933343560397188628310857237435069782211331017492774306057;
+    uint256 constant deltay1 = 5666662617252795449160602561452985371345193675875514987861555258112043377621;
+    uint256 constant deltay2 = 17554548791711239888432666512510687426289422820472678333844002588317960484798;
 
     
-    uint256 constant IC0x = 2149072200945825971634539904218965279778160505406174960630649266423420913110;
-    uint256 constant IC0y = 4783409482436958405313358375571755404120607654902209767119452073200592132328;
+    uint256 constant IC0x = 12787517516739501310327944963861315822722976693229660324072985242333010277865;
+    uint256 constant IC0y = 6745380600022802993320689833244914930996499670943746094023496715388621734841;
     
  
     // Memory data
@@ -53,32 +53,7 @@ contract Verifier {
 
     uint16 constant pLastMem = 896;
 
-    // Proof structure for easier integration
-    struct Proof {
-        uint[2] a;
-        uint[2][2] b;
-        uint[2] c;
-    }
-
-    // Public function with original signature (for backward compatibility)
-    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[1] calldata _pubSignals) public view returns (bool) {
-        uint[2] memory pA = _pA;
-        uint[2][2] memory pB = _pB;
-        uint[2] memory pC = _pC;
-        uint[1] memory pubSignals = _pubSignals;
-        return _verifyProofInternal(pA, pB, pC, pubSignals);
-    }
-
-    // Wrapper function that accepts Proof struct and uint[] for public inputs
-    function verifyProof(Proof memory proof, uint[] memory publicInputs) public view returns (bool) {
-        require(publicInputs.length == 1, "Invalid public inputs length");
-        uint[1] memory pubSignals;
-        pubSignals[0] = publicInputs[0];
-        return _verifyProofInternal(proof.a, proof.b, proof.c, pubSignals);
-    }
-
-    // Internal function with original signature
-    function _verifyProofInternal(uint[2] memory _pA, uint[2][2] memory _pB, uint[2] memory _pC, uint[1] memory _pubSignals) internal view returns (bool) {
+    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC) public view returns (bool) {
         assembly {
             function checkField(v) {
                 if iszero(lt(v, r)) {
@@ -113,7 +88,7 @@ contract Verifier {
                 }
             }
 
-            function checkPairing(pA, pB, pC, pubSignals, pMem) -> isOk {
+            function checkPairing(pA, pB, pC, pMem) -> isOk {
                 let _pPairing := add(pMem, pPairing)
                 let _pVk := add(pMem, pVk)
 
@@ -124,14 +99,14 @@ contract Verifier {
                 
 
                 // -A
-                mstore(_pPairing, mload(pA))
-                mstore(add(_pPairing, 32), mod(sub(q, mload(add(pA, 32))), q))
+                mstore(_pPairing, calldataload(pA))
+                mstore(add(_pPairing, 32), mod(sub(q, calldataload(add(pA, 32))), q))
 
                 // B
-                mstore(add(_pPairing, 64), mload(pB))
-                mstore(add(_pPairing, 96), mload(add(pB, 32)))
-                mstore(add(_pPairing, 128), mload(add(pB, 64)))
-                mstore(add(_pPairing, 160), mload(add(pB, 96)))
+                mstore(add(_pPairing, 64), calldataload(pB))
+                mstore(add(_pPairing, 96), calldataload(add(pB, 32)))
+                mstore(add(_pPairing, 128), calldataload(add(pB, 64)))
+                mstore(add(_pPairing, 160), calldataload(add(pB, 96)))
 
                 // alpha1
                 mstore(add(_pPairing, 192), alphax)
@@ -155,8 +130,8 @@ contract Verifier {
                 mstore(add(_pPairing, 544), gammay2)
 
                 // C
-                mstore(add(_pPairing, 576), mload(pC))
-                mstore(add(_pPairing, 608), mload(add(pC, 32)))
+                mstore(add(_pPairing, 576), calldataload(pC))
+                mstore(add(_pPairing, 608), calldataload(add(pC, 32)))
 
                 // delta2
                 mstore(add(_pPairing, 640), deltax1)
@@ -176,8 +151,8 @@ contract Verifier {
             // Validate that all evaluations ∈ F
             
 
-            // Validate all evaluations
-            let isValid := checkPairing(_pA, _pB, _pC, _pubSignals, pMem)
+            // Validate all evaluations (no public signals for custom circuit)
+            let isValid := checkPairing(_pA, _pB, _pC, pMem)
 
             mstore(0, isValid)
              return(0, 0x20)
