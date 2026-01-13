@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./Verifier.sol";
+import "./Verifier_custom.sol";
 import "./VerificationRegistry.sol";
 
 /**
@@ -9,7 +9,7 @@ import "./VerificationRegistry.sol";
  * @notice Main contract for zk-SNARK proof verification and management
  * @dev This contract orchestrates the verification process:
  *      1. Receives zk-SNARK proofs from users
- *      2. Verifies proofs using the Verifier contract (configured for verify_custom.circom)
+ *      2. Verifies proofs using the Verifier_custom contract (configured for verify_custom.circom)
  *      3. Records results in the VerificationRegistry
  * 
  * Note: Configured for verify_custom.circom. The custom circuit currently has 0 public outputs.
@@ -17,7 +17,14 @@ import "./VerificationRegistry.sol";
  * verificationType as a public input before deployment.
  */
 contract ZKVerifyPass {
-    Verifier public verifier;
+    // Proof structure for Groth16 proofs
+    struct Proof {
+        uint[2] a;
+        uint[2][2] b;
+        uint[2] c;
+    }
+
+    Groth16Verifier public verifier;
     VerificationRegistry public registry;
     
     // Owner of the contract
@@ -51,7 +58,7 @@ contract ZKVerifyPass {
 
     /**
      * @notice Constructor
-     * @param _verifier Address of the Verifier contract
+     * @param _verifier Address of the Verifier_custom contract (Groth16Verifier)
      * @param _registry Address of the VerificationRegistry contract
      * @param _verificationFee Initial verification fee in wei
      */
@@ -63,7 +70,7 @@ contract ZKVerifyPass {
         require(_verifier != address(0), "Invalid verifier address");
         require(_registry != address(0), "Invalid registry address");
         
-        verifier = Verifier(_verifier);
+        verifier = Groth16Verifier(_verifier);
         registry = VerificationRegistry(_registry);
         owner = msg.sender;
         verificationFee = _verificationFee;
@@ -79,7 +86,7 @@ contract ZKVerifyPass {
      * @return isValid Whether the proof is valid
      */
     function verifyAndRecord(
-        Verifier.Proof memory proof,
+        Proof memory proof,
         uint[] memory publicInputs,
         address subject,
         string memory metadata
@@ -112,7 +119,14 @@ contract ZKVerifyPass {
         emit VerificationRequested(verificationId, msg.sender, subject);
         
         // Verify the proof
-        isValid = verifier.verifyProof(proof, publicInputs);
+        // Groth16Verifier expects: verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC)
+        // Custom circuit has 0 public inputs, so _pubSignals parameter is removed
+        require(publicInputs.length == 0, "Custom circuit expects 0 public inputs");
+        isValid = verifier.verifyProof(
+            [proof.a[0], proof.a[1]],
+            [[proof.b[0][0], proof.b[0][1]], [proof.b[1][0], proof.b[1][1]]],
+            [proof.c[0], proof.c[1]]
+        );
         
         // Hash public inputs for storage
         bytes32 publicInputHash = keccak256(abi.encodePacked(publicInputs));
@@ -144,7 +158,7 @@ contract ZKVerifyPass {
      * @return isValid Whether the proof is valid
      */
     function verifyOnly(
-        Verifier.Proof memory proof,
+        Proof memory proof,
         uint[] memory publicInputs
     ) public view returns (bool isValid) {
         require(
@@ -152,7 +166,13 @@ contract ZKVerifyPass {
             "Invalid public inputs length"
         );
         
-        isValid = verifier.verifyProof(proof, publicInputs);
+        // Groth16Verifier expects: verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC)
+        // Custom circuit has 0 public inputs, so _pubSignals parameter is removed
+        isValid = verifier.verifyProof(
+            [proof.a[0], proof.a[1]],
+            [[proof.b[0][0], proof.b[0][1]], [proof.b[1][0], proof.b[1][1]]],
+            [proof.c[0], proof.c[1]]
+        );
         return isValid;
     }
 
