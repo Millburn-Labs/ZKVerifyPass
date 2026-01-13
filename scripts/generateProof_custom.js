@@ -5,11 +5,11 @@
  * Usage:
  *   node scripts/generateProof_custom.js [verificationType]
  * 
- * Verification Types:
- *   1 = Age verification (using hash commitment)
- *   2 = Identity verification
- *   3 = Compliance verification
- *   4 = Asset ownership verification
+ * Verification Types (numeric or string):
+ *   1 or 'age' = Age verification (using hash commitment)
+ *   2 or 'identity' = Identity verification
+ *   3 or 'compliance' = Compliance verification
+ *   4 or 'ownership' = Asset ownership verification
  * 
  * Make sure you have:
  *   1. Compiled the circuit (verify_custom.wasm)
@@ -211,13 +211,36 @@ async function generateProof(verificationType = 2) {
 
 // Run if called directly
 if (require.main === module) {
-    const verificationType = process.argv[2] ? parseInt(process.argv[2]) : 2;
+    const arg = process.argv[2];
+    let verificationType = 2; // default
     
-    if (isNaN(verificationType) || verificationType < 1 || verificationType > 4) {
-        console.error("Usage: node scripts/generateProof_custom.js [verificationType]");
-        console.error("  verificationType: 1 (age), 2 (identity), 3 (compliance), 4 (asset ownership)");
-        console.error("  Default: 2 (identity)");
-        process.exit(1);
+    if (arg) {
+        // Try to parse as number first
+        const numArg = parseInt(arg);
+        if (!isNaN(numArg) && numArg >= 1 && numArg <= 4) {
+            verificationType = numArg;
+        } else {
+            // Try to parse as string
+            const normalizedArg = arg.toLowerCase().trim();
+            const typeMap = {
+                'age': 1,
+                'identity': 2,
+                'compliance': 3,
+                'ownership': 4,
+                'asset': 4,
+                'asset ownership': 4,
+                'assetownership': 4
+            };
+            
+            if (typeMap[normalizedArg] !== undefined) {
+                verificationType = typeMap[normalizedArg];
+            } else {
+                console.error("Usage: node scripts/generateProof_custom.js [verificationType]");
+                console.error("  verificationType: 1 or 'age' (age), 2 or 'identity' (identity), 3 or 'compliance' (compliance), 4 or 'ownership' (asset ownership)");
+                console.error("  Default: 2 (identity)");
+                process.exit(1);
+            }
+        }
     }
 
     generateProof(verificationType)
