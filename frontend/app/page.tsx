@@ -158,12 +158,21 @@ export default function Home() {
 
       const metadata = getMetadata(selectedVerificationType);
       
+      // Call verifyAndRecord - this will trigger the wallet popup via writeContract
       await verifyAndRecord(parsed, address as `0x${string}`, metadata);
+      // Note: writeContract from wagmi automatically triggers wallet popup for signing
     } catch (err: any) {
-      if (err.message.includes('JSON')) {
+      console.error('Error submitting proof:', err);
+      
+      // Handle user rejection
+      if (err.message?.includes('User rejected') || err.message?.includes('User denied') || err.message?.includes('rejected')) {
+        setError('Transaction was rejected. Please try again and confirm the transaction in your wallet.');
+      } else if (err.message?.includes('JSON')) {
         setError('Invalid JSON format. Please check your proof data.');
+      } else if (err.message?.includes('Insufficient')) {
+        setError('Insufficient funds. Please ensure you have enough ETH to pay the verification fee.');
       } else {
-        setError(err.message || 'Failed to submit proof');
+        setError(err.message || 'Failed to submit proof. Please check the console for details.');
       }
     }
   };
@@ -273,11 +282,11 @@ export default function Home() {
                     setProofData(e.target.value);
                     setError(null);
                   }}
-                  placeholder='{"proof": {"pi_a": [...], "pi_b": [...], "pi_c": [...]}, "publicSignals": [...]}'
+                  placeholder='{"pi_a": [...], "pi_b": [...], "pi_c": [...], "publicSignals": []}'
                   className="w-full h-48 bg-black border border-gray-700 rounded-lg p-4 text-white font-mono text-sm focus:outline-none focus:border-white resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-2">
-                  Paste your zk-SNARK proof data in JSON format. Format: {"{"}proof: {"{"}pi_a, pi_b, pi_c{"}"}, publicSignals: []{"}"}
+                  Paste your zk-SNARK proof data in JSON format. Supports: {"{"}"pi_a": [...], "pi_b": [...], "pi_c": [...], "publicSignals": []{"}"} or nested format
                 </p>
               </div>
             )}
