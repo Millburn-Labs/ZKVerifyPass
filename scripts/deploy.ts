@@ -3,7 +3,7 @@
  * 
  * This script deploys the following contracts in order:
  * 1. VerificationRegistry - Storage contract for verification records
- * 2. Verifier - zk-SNARK proof verifier (Groth16Verifier from Verifier.sol)
+ * 2. Verifier_custom - zk-SNARK proof verifier (Groth16Verifier from Verifier_custom.sol)
  * 3. ZKVerifyPass - Main contract that orchestrates verification
  */
 
@@ -60,18 +60,10 @@ async function main() {
     console.log("  Transaction hash:", registry.deploymentTransaction()?.hash);
     console.log("");
 
-    // Step 2: Deploy Verifier
-    // Note: The Verifier.sol file contains a contract named Groth16Verifier,
-    // but Hardhat should resolve "Verifier" to the contract in that file.
-    // If this fails, try using "Groth16Verifier" as the contract name.
-    console.log("Step 2: Deploying Verifier (Groth16Verifier)...");
-    let VerifierFactory;
-    try {
-      VerifierFactory = await ethers.getContractFactory("Verifier");
-    } catch (error) {
-      console.log("  Attempting to use 'Groth16Verifier' as contract name...");
-      VerifierFactory = await ethers.getContractFactory("Groth16Verifier");
-    }
+    // Step 2: Deploy Verifier_custom (Groth16Verifier)
+    // Note: Verifier_custom.sol contains the Groth16Verifier contract for the custom circuit
+    console.log("Step 2: Deploying Verifier_custom (Groth16Verifier)...");
+    const VerifierFactory = await ethers.getContractFactory("Groth16Verifier");
     const verifier = await VerifierFactory.deploy();
     await verifier.waitForDeployment();
     const verifierAddress = await verifier.getAddress();
