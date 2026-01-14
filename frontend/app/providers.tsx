@@ -49,19 +49,28 @@ const networks = [mantleSepolia] as [Chain, ...Chain[]];
 const wagmiAdapter = new WagmiAdapter({
   networks,
   projectId,
-  ssr: true,
+  ssr: false, // Disable SSR for Vercel compatibility
 });
 
 // Initialize AppKit (call this once, outside component)
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId,
-  metadata,
-});
+// Only initialize if we have a project ID and we're in a browser environment
+if (typeof window !== 'undefined' && projectId) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    networks,
+    projectId,
+    metadata,
+  });
+}
 
 // Create query client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
