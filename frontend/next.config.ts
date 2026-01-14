@@ -1,16 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Silence Turbopack warning by explicitly choosing webpack
+  turbopack: {},
+  
   // Enable webpack build worker to prevent "Call retries were exceeded" error
-  // This is required when using custom webpack configurations
   experimental: {
     webpackBuildWorker: true,
+    serverComponentsExternalPackages: ['@coinbase/cdp-sdk'],
   },
   
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Prevent client-side bundling of Node.js-only modules
-      // Note: buffer, crypto, stream, util are kept as they may be needed by viem/wagmi
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
